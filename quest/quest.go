@@ -49,6 +49,8 @@ type Question struct {
 	falseString string
 	extraBool   map[string]bool // to pass it to validate.Atob
 
+	echoRune rune // echo
+
 	// To restore the terminal original settings
 	termFD    int
 	termState terminal.State
@@ -101,6 +103,8 @@ func New(prefix, errPrefix, trueString, falseString string) *Question {
 		trueString,
 		falseString,
 		extraBool,
+
+		0,
 
 		term.Fd(),
 		term.OriginalState(),
@@ -162,6 +166,12 @@ func (q *Question) Default(def interface{}) *Question {
 		return q
 	}
 	q.defValue = def
+	return q
+}
+
+// Default sets a value by default.
+func (q *Question) EchoRune(r rune) *Question {
+	q.echoRune = r
 	return q
 }
 
@@ -357,6 +367,11 @@ func (q *Question) ReadEmail() (string, error) {
 	return q.ReadRegexp("i", validate.StartOfString+validate.RE_RFC_EMAIL+validate.EndOfString)
 }
 
+// ReadPassword prints the prompt waiting to get a none empty string.
+func (q *Question) ReadPassword() (string, error) {
+	return q.ReadRegexp("i", validate.StartOfString+".+"+validate.EndOfString)
+}
+
 // == Utility
 
 // defaultToPrint returns the default value.
@@ -395,7 +410,7 @@ func (q *Question) newLine() *editline.Line {
 		prompt = q_MULTIPLE_PREFIX
 	}
 
-	ln, err := editline.NewLine(prompt, q.errPrefix, extraChars, nil) // No history.
+	ln, err := editline.NewLine(prompt, q.errPrefix, extraChars, nil, q.echoRune) // No history.
 	if err != nil {
 		panic(err)
 	}

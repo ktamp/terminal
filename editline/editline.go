@@ -73,7 +73,7 @@ var (
 var ChanCtrlC = make(chan byte)
 
 func init() {
-	if !terminal.CheckANSI() {
+	if !terminal.SupportANSI() {
 		panic("Your terminal does not support ANSI")
 	}
 }
@@ -93,12 +93,12 @@ type Line struct {
 // raw mode.
 // lenAnsi is the length of ANSI codes that the prompt ps1 could have.
 // If the history is nil then it is not used.
-func NewLine(ps1, ps2 string, lenAnsi int, hist *history) (*Line, error) {
+func NewLine(ps1, ps2 string, lenAnsi int, hist *history, echoRune rune) (*Line, error) {
 	term, err := terminal.New(InputFd)
 	if err != nil {
 		return nil, err
 	}
-	if err = term.MakeRaw(); err != nil {
+	if err = term.RawMode(); err != nil {
 		return nil, err
 	}
 
@@ -108,7 +108,7 @@ func NewLine(ps1, ps2 string, lenAnsi int, hist *history) (*Line, error) {
 		return nil, err
 	}
 
-	buf := newBuffer(lenPS1, col)
+	buf := newBuffer(lenPS1, col, echoRune)
 	buf.insertRunes([]rune(ps1))
 
 	return &Line{
@@ -130,7 +130,7 @@ func NewDefaultLine(hist *history) (*Line, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err = term.MakeRaw(); err != nil {
+	if err = term.RawMode(); err != nil {
 		return nil, err
 	}
 
@@ -139,7 +139,7 @@ func NewDefaultLine(hist *history) (*Line, error) {
 		return nil, err
 	}
 
-	buf := newBuffer(len(_PS1), col)
+	buf := newBuffer(len(_PS1), col, 0)
 	buf.insertRunes([]rune(_PS1))
 
 	return &Line{

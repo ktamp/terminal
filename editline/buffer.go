@@ -34,13 +34,15 @@ type buffer struct {
 	pos       int    // Pointer position into buffer
 	size      int    // Amount of characters added
 	data      []rune // Text buffer
+	echoRune  rune
 }
 
-func newBuffer(promptLen, columns int) *buffer {
+func newBuffer(promptLen, columns int, echoRune rune) *buffer {
 	b := new(buffer)
 
 	b.columns = columns
 	b.promptLen = promptLen
+	b.echoRune = echoRune
 	b.data = make([]rune, BufferLen, BufferCap)
 
 	return b
@@ -56,11 +58,20 @@ func (b *buffer) insertRune(r rune) error {
 
 	// Avoid a full update of the line.
 	if b.pos == b.size {
-		char := make([]byte, utf8.UTFMax)
-		utf8.EncodeRune(char, r)
+		if b.echoRune == 0 {
+			char := make([]byte, utf8.UTFMax)
+			utf8.EncodeRune(char, r)
 
-		if _, err := Output.Write(char); err != nil {
-			return outputError(err.Error())
+			if _, err := Output.Write(char); err != nil {
+				return outputError(err.Error())
+			}
+		} else {
+			char := make([]byte, utf8.UTFMax)
+			utf8.EncodeRune(char, b.echoRune)
+
+			if _, err := Output.Write(char); err != nil {
+				return outputError(err.Error())
+			}
 		}
 	} else {
 		useRefresh = true
@@ -85,6 +96,28 @@ func (b *buffer) insertRunes(runes []rune) error {
 		}
 	}
 	return nil
+}
+
+// toBytes returns a slice of the contents of the buffer.
+func (b *buffer) toDisplayBytes() []byte {
+	if b.echoRune == 0 {
+		return b.toBytes()
+	}
+
+	chars := make([]byte, b.size*utf8.UTFMax)
+	var end, runeLen int
+
+	// == Each character (as integer) is encoded to []byte
+	for i := 0; i < b.size; i++ {
+		if i != 0 {
+			runeLen = utf8.EncodeRune(chars[end:], b.echoRune)
+			end += runeLen
+		} else {
+			runeLen = utf8.EncodeRune(chars, b.echoRune)
+			end = runeLen
+		}
+	}
+	return chars[:end]
 }
 
 // toBytes returns a slice of the contents of the buffer.
@@ -124,7 +157,7 @@ func (b *buffer) refresh() (err error) {
 	if _, err = Output.Write(_CR); err != nil {
 		return outputError(err.Error())
 	}
-	if _, err = Output.Write(b.toBytes()); err != nil {
+	if _, err = Output.Write(b.toDisplayBytes()); err != nil {
 		return outputError(err.Error())
 	}
 	if _, err = Output.Write(delToRight); err != nil {
