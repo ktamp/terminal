@@ -60,13 +60,13 @@ func GetName(fd int) (string, error) {
 
 // IsTerminal returns true if the file descriptor is a terminal.
 func IsTerminal(fd int) bool {
-	return tcgetattr(fd, &termios{}) == nil
+	return tcgetattr(fd, &State{}) == nil
 }
 
 // ReadPassword reads the input until '\n' without echo.
 // Returns the number of bytes read.
 func ReadPassword(fd int, pass []byte) (n int, err error) {
-	var oldState, newState termios
+	var oldState, newState State
 
 	if err = tcgetattr(fd, &oldState); err != nil {
 		return 0, err

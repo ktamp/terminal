@@ -28,8 +28,10 @@ type Terminal struct {
 	row, column int
 
 	// Contain the state of a terminal, allowing to restore the original settings
-	oldState, lastState uint32
+	oldState, lastState State
 }
+
+type State uint32
 
 // New creates a new terminal interface in the file descriptor.
 func New(handle syscall.Handle) (*Terminal, error) {
@@ -48,13 +50,9 @@ func New(handle syscall.Handle) (*Terminal, error) {
 // == Restore
 //
 
-type State struct {
-	wrap uint32
-}
-
 // OriginalState returns the terminal's original state.
 func (t *Terminal) OriginalState() State {
-	return State{t.oldState}
+	return t.oldState
 }
 
 // Restore restores the original settings for the terminal.
@@ -71,7 +69,7 @@ func (t *Terminal) Restore() error {
 
 // Restore restores the settings from State.
 func Restore(handle syscall.Handle, st State) error {
-	if err := setConsoleMode(handle, st.wrap); err != nil {
+	if err := setConsoleMode(handle, st); err != nil {
 		return fmt.Errorf("terminal: could not restore: %s", err)
 	}
 	return nil
@@ -153,7 +151,7 @@ func (t *Terminal) CharMode() (err error) {
 
 // SetMode sets the terminal attributes given by state.
 // Warning: The use of this function could do your code not cross-system.
-func (t *Terminal) SetMode(state uint32) error {
+func (t *Terminal) SetMode(state State) error {
 	if err := setConsoleMode(t.handle, state); err != nil {
 		return fmt.Errorf("terminal: could not set new mode: %s", err)
 	}

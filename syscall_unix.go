@@ -4,10 +4,10 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-/* Reference: man termios ; man tty_ioctl */
 
 // +build !plan9,!windows
 
+/* Reference: man termios ; man tty_ioctl */
 package terminal
 
 import (
@@ -17,7 +17,7 @@ import (
 
 //sys	int tcgetattr(int fd, struct termios *termios_p)
 
-func tcgetattr(fd int, state *termios) (err error) {
+func tcgetattr(fd int, state *State) (err error) {
 	_, _, e1 := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd),
 		uintptr(_TCGETS), uintptr(unsafe.Pointer(state)))
 	if e1 != 0 {
@@ -28,7 +28,7 @@ func tcgetattr(fd int, state *termios) (err error) {
 
 //sys	int tcsetattr(int fd, int optional_actions, const struct termios *termios_p)
 
-func tcsetattr(fd int, action uint, state *termios) (err error) {
+func tcsetattr(fd int, action uint, state *State) (err error) {
 	switch action {
 	case _TCSANOW:
 		action = _TCSETS

@@ -4,15 +4,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// +build !plan9,!windows
+// +build !plan9
 
 package terminal
 
+
 import (
-	"fmt"
+//	"fmt"
+	"path/filepath"
 	"os"
-	"os/signal"
-	"strconv"
+//	"os/signal"
+//	"strconv"
 	"syscall"
 )
 
@@ -67,14 +69,14 @@ func GetName(fd int) (string, error) {
 
 // IsTerminal returns true if the handler is a terminal.
 func IsTerminal(handle syscall.Handle) bool {
-	var st uint32
+	var st State
 	return getConsoleMode(handle, &st) == nil
 }
 /*
 // ReadPassword reads the input until '\n' without echo.
 // Returns the number of bytes read.
 func ReadPassword(fd int, pass []byte) (n int, err error) {
-	var oldState, newState termios
+	var oldState, newState State
 
 	if err = tcgetattr(fd, &oldState); err != nil {
 		return 0, err

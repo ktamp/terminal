@@ -9,8 +9,7 @@ package terminal
 type mode int
 
 const (
-	_ mode = iota
-	rawMode
+	rawMode mode = 1 << iota
 	echoMode
 	charMode
 	otherMode

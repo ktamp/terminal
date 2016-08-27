@@ -21,8 +21,10 @@ type Terminal struct {
 	row, column int
 
 	// Contain the state of a terminal, allowing to restore the original settings
-	oldState, lastState termios
+	oldState, lastState State
 }
+
+type State termios
 
 // New creates a new terminal interface in the file descriptor.
 // Note that an input file descriptor should be used.
@@ -42,13 +44,9 @@ func New(fd int) (*Terminal, error) {
 // == Restore
 //
 
-type State struct {
-	wrap termios
-}
-
 // OriginalState returns the terminal's original state.
 func (t *Terminal) OriginalState() State {
-	return State{t.oldState}
+	return State(t.oldState)
 }
 
 // Restore restores the original settings for the terminal.
@@ -65,7 +63,7 @@ func (t *Terminal) Restore() error {
 
 // Restore restores the settings from State.
 func Restore(fd int, st State) error {
-	if err := tcsetattr(fd, _TCSANOW, &st.wrap); err != nil {
+	if err := tcsetattr(fd, _TCSANOW, &st); err != nil {
 		return fmt.Errorf("terminal: could not restore: %s", err)
 	}
 	return nil
@@ -148,7 +146,7 @@ func (t *Terminal) CharMode() error {
 
 // SetMode sets the terminal attributes given by state.
 // Warning: The use of this function could do your code not cross-system.
-func (t *Terminal) SetMode(state termios) error {
+func (t *Terminal) SetMode(state State) error {
 	if err := tcsetattr(t.fd, _TCSANOW, &state); err != nil {
 		return fmt.Errorf("terminal: could not set new mode: %s", err)
 	}

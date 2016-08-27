@@ -17,7 +17,7 @@ var (
 	procReadConsoleInputW          = modkernel32.MustFindProc("ReadConsoleInputW")
 )
 
-func getConsoleMode(handle syscall.Handle, mode *uint32) (err error) {
+func getConsoleMode(handle syscall.Handle, mode *State) (err error) {
 	r1, _, e1 := syscall.Syscall(procGetConsoleMode.Addr(), 2, uintptr(handle), uintptr(unsafe.Pointer(mode)), 0)
 	if int(r1) == 0 {
 		if e1 != 0 {
@@ -29,7 +29,7 @@ func getConsoleMode(handle syscall.Handle, mode *uint32) (err error) {
 	return
 }
 
-func setConsoleMode(handle syscall.Handle, mode uint32) (err error) {
+func setConsoleMode(handle syscall.Handle, mode State) (err error) {
 	r1, _, e1 := syscall.Syscall(procSetConsoleMode.Addr(), 2, uintptr(handle), uintptr(mode), 0)
 	if int(r1) == 0 {
 		if e1 != 0 {
